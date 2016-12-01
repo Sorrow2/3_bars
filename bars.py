@@ -17,7 +17,7 @@ def get_smallest_bar(data):
 
 def get_closest_bar(data, longitude, latitude):
     def distance(lat_origin, lon_origin, lat_destination, lon_destination):
-        """distance in meters between two (lat, lon) tuples"""
+        """distance in meters between two lat, lon points"""
 
         radius = 6371009  # metres WGS-84 model
 
