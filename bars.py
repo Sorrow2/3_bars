@@ -2,48 +2,58 @@ import json
 import math
 
 
-def load_data(filepath='data-2897-2016-11-23.json'):
+def load_data(filepath='bars.json'):
     with open(filepath, encoding='windows-1251') as f:
         return json.load(f)
 
 
-def get_biggest_bar(data):
-    return 'Самый большой бар (json):\n{}'.format(max(data, key=lambda x: x['SeatsCount']))
+def get_biggest_bar(bars_json):
+    biggest_bar = max(bars_json, key=lambda x: x['SeatsCount'])
+    return 'Самый большой бар: {}, кол-во мест: {} ({}).'.format(biggest_bar['Name'], biggest_bar['SeatsCount'],
+                                                                 biggest_bar['Address'])
 
 
-def get_smallest_bar(data):
-    return 'Самый маленький бар (json):\n{}'.format(min(data, key=lambda x: x['SeatsCount']))
+def get_smallest_bar(bars_json):
+    smallest_bar = min(bars_json, key=lambda x: x['SeatsCount'])
+    return 'Самый маленький бар: {}, кол-во мест: {} ({}).'.format(smallest_bar['Name'], smallest_bar['SeatsCount'],
+                                                                   smallest_bar['Address'])
+
+
+def distance_between_points(lat_origin, lon_origin, lat_destination, lon_destination):
+    """distance in meters between two xx.xxxxx, yy.yyyyy points"""
+
+    radius = 6371009  # metres WGS-84 model
+
+    dlat = math.radians(lat_destination - lat_origin)
+    dlon = math.radians(lon_destination - lon_origin)
+    a = math.sin(dlat / 2) * math.sin(dlat / 2) + math.cos(math.radians(lat_origin)) * math.cos(
+        math.radians(lat_destination)) * math.sin(dlon / 2) * math.sin(dlon / 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = radius * c
+    return distance
 
 
 def get_closest_bar(data, longitude, latitude):
-    def distance(lat_origin, lon_origin, lat_destination, lon_destination):
-        """distance in meters between two lat, lon points"""
+    closest_bar = min(data, key=lambda x: distance_between_points(latitude, longitude, float(x['Latitude_WGS84']),
+                                                                  float(x['Longitude_WGS84'])))
 
-        radius = 6371009  # metres WGS-84 model
+    return 'Самый близкий бар к координатам ({}, {}): {}, кол-во мест: {} ({}).' \
+           ''.format(latitude, longitude, closest_bar['Name'], closest_bar['SeatsCount'], closest_bar['Address'])
 
-        dlat = math.radians(lat_destination - lat_origin)
-        dlon = math.radians(lon_destination - lon_origin)
-        a = math.sin(dlat / 2) * math.sin(dlat / 2) + math.cos(math.radians(lat_origin)) \
-                                                      * math.cos(math.radians(lat_destination)) * math.sin(
-            dlon / 2) * math.sin(
-            dlon / 2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        d = radius * c
-        return d
-
-    return 'Самый близкий бар к {}, {} (json):\n{}'.format(longitude, latitude,
-                                                       min(data, key=lambda x: distance(latitude, longitude,
-                                                                                        float(x['Latitude_WGS84']),
-                                                                                        float(x['Longitude_WGS84']))))
 
 if __name__ == '__main__':
-    data = load_data()
-    splitter = '-'*50
-    print(get_biggest_bar(data))
+    bars_json = load_data()
+    splitter = '-' * 50
+    print(get_biggest_bar(bars_json))
     print(splitter)
-    print(get_smallest_bar(data))
+    print(get_smallest_bar(bars_json))
     print(splitter)
     print('Поиск самого близкого бара.')
-    lat_inp = float(input('Введите широту (например 55.701101): ').replace(',', '.'))
-    lon_inp = float(input('Введите долготу (например 37.638228): ').replace(',', '.'))
-    print(get_closest_bar(data, lon_inp, lat_inp))
+    while 1:
+        try:
+            lat_inp = float(input('Введите широту (например 55.701101): ').replace(',', '.'))
+            lon_inp = float(input('Введите долготу (например 37.638228): ').replace(',', '.'))
+            print(get_closest_bar(bars_json, lon_inp, lat_inp))
+            break
+        except ValueError:
+            print('Неверный формат. Попробуйте еще раз.')
